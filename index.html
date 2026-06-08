@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Custom Card Game Generator</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.x/dist/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --border: #e0ddd6;
+    --border-strong: #c8c4bc;
+    --text: #1a1916;
+    --text-muted: #6b6860;
+    --text-faint: #9e9b94;
+    --green: #1D9E75;
+    --green-dark: #0F6E56;
+    --green-light: #E1F5EE;
+    --amber: #BA7517;
+    --amber-light: #FAEEDA;
+    --amber-border: #FAC775;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+  }
+
+  body {
+    font-family: 'Georgia', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .page {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 2.5rem;
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  header .logo {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    color: var(--text);
+    font-family: 'Georgia', serif;
+  }
+
+  header .logo span {
+    color: var(--green);
+  }
+
+  header .tagline {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    font-family: system-ui, sans-serif;
+  }
+
+  .steps {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .step {
+    font-size: 12px;
+    font-family: system-ui, sans-serif;
+    padding: 5px 12px;
+    border-radius: 99px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    transition: all 0.2s;
+  }
+
+  .step.active {
+    background: var(--green);
+    color: #fff;
+    border-color: var(--green);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .card h2 {
+    font-size: 16px;
+    font-weight: 600;
+    font-family: system-ui, sans-serif;
+    margin-bottom: 1rem;
+    color: var(--text);
+  }
+
+  .info-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  .pill {
+    font-size: 13px;
+    font-family: system-ui, sans-serif;
+    padding: 4px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    color: var(--text-muted);
+  }
+
+  .pill strong {
+    color: var(--green);
+    font-weight: 600;
+  }
+
+  select, input[type=number] {
+    font-family: system-ui, sans-serif;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-strong);
+    background: var(--bg);
+    color: var(--text);
+    width: 100%;
+    max-width: 360px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  select { cursor: pointer; }
+  select:focus, input[type=number]:focus { border-color: var(--green); }
+
+  .config-label {
+    font-size: 12px;
+    font-family: system-ui, sans-serif;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .upload-zone {
+    border: 2px dashed var(--border-strong);
+    border-radius: var(--radius-md);
+    padding: 2.5rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    user-select: none;
+  }
+
+  .upload-zone:hover, .upload-zone.drag-over {
+    background: var(--green-light);
+    border-color: var(--green);
+  }
+
+  .upload-zone i {
+    font-size: 32px;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .upload-zone p {
+    font-family: system-ui, sans-serif;
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .upload-zone .hint {
+    font-size: 12px;
+    color: var(--text-faint);
+    margin-top: 4px;
+  }
+
+  .symbols-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 1rem;
+  }
+
+  .symbol-chip {
+    position: relative;
+    width: 68px;
+    height: 68px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg);
+    overflow: hidden;
+  }
+
+  .symbol-chip img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 6px;
+  }
+
+  .symbol-chip button {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(180, 40, 40, 0.85);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    font-family: system-ui, sans-serif;
+    padding: 0;
+  }
+
+  .warn {
+    font-size: 13px;
+    font-family: system-ui, sans-serif;
+    color: var(--amber);
+    background: var(--amber-light);
+    border: 1px solid var(--amber-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    margin-top: 8px;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  button.btn {
+    font-family: system-ui, sans-serif;
+    font-size: 14px;
+    padding: 9px 20px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+
+  button.btn:hover { background: var(--bg); }
+
+  button.btn.primary {
+    background: var(--green);
+    color: white;
+    border-color: var(--green);
+  }
+
+  button.btn.primary:hover { background: var(--green-dark); }
+  button.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .preview-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 4px;
+  }
+
+  .card-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .card-wrap span {
+    font-size: 11px;
+    font-family: system-ui, sans-serif;
+    color: var(--text-faint);
+  }
+
+  canvas.preview-card {
+    display: block;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+  }
+
+  #previewCard { display: none; }
+
+  /* ── Main menu ── */
+  .menu-heading {
+    font-size: 13px;
+    font-family: system-ui, sans-serif;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 1rem;
+  }
+
+  .game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .game-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+    text-align: left;
+    width: 100%;
+  }
+
+  .game-card:hover {
+    border-color: var(--green);
+    box-shadow: 0 4px 18px rgba(29, 158, 117, 0.12);
+    transform: translateY(-2px);
+  }
+
+  .game-card-icon {
+    font-size: 34px;
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+
+  .game-card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    font-family: system-ui, sans-serif;
+    color: var(--text);
+    margin: 0;
+  }
+
+  .game-card p {
+    font-size: 13px;
+    font-family: system-ui, sans-serif;
+    color: var(--text-muted);
+    line-height: 1.5;
+    flex: 1;
+    margin: 0;
+  }
+
+  .game-card .btn {
+    align-self: flex-start;
+    margin-top: 0.5rem;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    font-family: system-ui, sans-serif;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 1.5rem;
+    background: none;
+    border: none;
+    transition: color 0.15s;
+  }
+
+  .back-link:hover { color: var(--green); }
+
+  footer {
+    margin-top: 2.5rem;
+    text-align: center;
+    font-size: 12px;
+    font-family: system-ui, sans-serif;
+    color: var(--text-faint);
+  }
+
+  /* ── SET Game ── */
+  .set-shape-editors { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .set-shape-editor  { display: flex; flex-direction: column; gap: 4px; }
+  canvas.shape-canvas { border: 1px solid var(--border-strong); background: white; cursor: crosshair; border-radius: var(--radius-sm); touch-action: none; display: block; }
+  .set-color-pickers  { display: flex; gap: 2rem; flex-wrap: wrap; align-items: flex-start; }
+  .set-color-item     { display: flex; flex-direction: column; gap: 4px; }
+  input[type=color]   { width: 64px; height: 44px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); cursor: pointer; padding: 2px; background: none; }
+  .set-fill-editors   { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+  .set-fill-editor    { display: flex; flex-direction: column; gap: 4px; }
+  canvas.fill-canvas  { border: 1px solid var(--border-strong); background: white; cursor: crosshair; border-radius: var(--radius-sm); touch-action: none; image-rendering: pixelated; display: block; }
+  canvas.set-card-canvas { display: block; border-radius: 6px; width: 85px; height: 119px; }
+
+  /* ── Halli Galli ── */
+  .halli-fruit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .halli-fruit-slot {
+    border: 2px dashed var(--border-strong); border-radius: var(--radius-md);
+    padding: 1.25rem 1rem; text-align: center; cursor: pointer; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 130px; gap: 6px; transition: background 0.15s, border-color 0.15s;
+  }
+  .halli-fruit-slot:hover { background: var(--green-light); border-color: var(--green); }
+  .halli-fruit-slot.filled { border-style: solid; border-color: var(--green); background: var(--green-light); }
+  .halli-fruit-slot i { font-size: 28px; color: var(--text-muted); }
+  .halli-fruit-slot p { font-family: system-ui, sans-serif; font-size: 13px; color: var(--text-muted); }
+  .halli-fruit-slot .hint { font-size: 11px; color: var(--text-faint); }
+  .halli-slot-img { max-width: 80px; max-height: 80px; object-fit: contain; }
+  .halli-clear-btn {
+    position: absolute; top: 5px; right: 5px; width: 20px; height: 20px;
+    border-radius: 50%; background: rgba(180,40,40,0.85); color: white; border: none;
+    cursor: pointer; font-size: 13px; display: flex; align-items: center;
+    justify-content: center; font-family: system-ui, sans-serif; line-height: 1;
+  }
+  canvas.halli-card-canvas { display: block; border-radius: 6px; width: 80px; height: 112px; }
+
+  /* Card backs — always hidden on screen */
+  .backs-section { display: none !important; }
+
+  /* Print layout — hidden on screen, takes over in print */
+  #printLayout { display: none; }
+
+  @media print {
+    @page { margin: 0.75cm; }
+    body { background: white; padding: 0; }
+    .page { max-width: none; }
+    /* Hide everything except the print layout */
+    header, footer, .back-link, .steps,
+    #menuView, #generatorView, #setGeneratorView, #halliGeneratorView { display: none !important; }
+    #printLayout { display: block !important; }
+    /* Front pages: left-aligned */
+    .print-front-page {
+      display: flex !important; flex-wrap: wrap; gap: 6px;
+      justify-content: flex-start;
+      page-break-after: always; break-after: page;
+    }
+    /* Back pages: right-aligned, starts on new page */
+    .print-back-page {
+      display: flex !important; flex-wrap: wrap; gap: 6px;
+      justify-content: flex-end;
+      page-break-after: always; break-after: page;
+    }
+    /* No trailing blank page after the very last back page */
+    .print-back-page:last-child { page-break-after: avoid; break-after: avoid; }
+    /* Card sizing — reuse existing canvas class rules */
+    canvas.preview-card  { width: 320px !important; height: 320px !important; border: 1px solid #ccc; }
+    canvas.set-card-canvas   { width: 225px !important; height: 315px !important; }
+    canvas.halli-card-canvas { width: 225px !important; height: 315px !important; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div>
+      <div class="logo">Custom Math <span>Games</span></div>
+      <div class="tagline">Build custom card game decks with your own images</div>
+    </div>
+  </header>
+
+  <!-- ── Main menu ── -->
+  <div id="menuView">
+    <p class="menu-heading">Choose a game</p>
+    <div class="game-grid">
+      <button class="game-card" onclick="showGenerator()">
+        <div class="game-card-icon">🤙</div>
+        <h3>Spot it! / Dobble</h3>
+        <p>Every two cards share exactly one matching symbol. Upload your own images to create a custom deck.</p>
+        <span class="btn primary">Create deck →</span>
+      </button>
+      <button class="game-card" onclick="showSetGenerator()">
+        <div class="game-card-icon">♦️</div>
+        <h3>SET</h3>
+        <p>Draw three custom shapes, pick three colors, and design three fill patterns. Generates all 81 cards.</p>
+        <span class="btn primary">Create deck →</span>
+      </button>
+      <button class="game-card" onclick="showHalliGenerator()">
+        <div class="game-card-icon">🍓</div>
+        <h3>Halli Galli</h3>
+        <p>Upload four fruit images. Generates 56 cards (1–5 of each fruit) for the classic bell-ringing game.</p>
+        <span class="btn primary">Create deck →</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── SET generator ── -->
+  <div id="setGeneratorView" style="display:none">
+    <button class="back-link" onclick="showMenu()">← All games</button>
+    <div class="steps">
+      <div class="step active" id="ss1">1 · Draw shapes</div>
+      <div class="step" id="ss2">2 · Pick colors</div>
+      <div class="step" id="ss3">3 · Design fills</div>
+      <div class="step" id="ss4">4 · Generate</div>
+    </div>
+
+    <div class="card" id="setShapesCard">
+      <h2>Draw your three shapes</h2>
+      <p style="font-size:13px;font-family:system-ui,sans-serif;color:var(--text-muted);margin-bottom:1rem">Draw each shape as a closed outline. The hollow interior is where colors and fills will appear. Each shape must have at least one enclosed area.</p>
+      <div class="set-shape-editors">
+        <div class="set-shape-editor">
+          <span class="config-label">Shape 1</span>
+          <canvas id="shapeCanvas0" class="shape-canvas" width="220" height="140"></canvas>
+          <div class="btn-row" style="margin-top:6px">
+            <button class="btn" onclick="clearShape(0)">Clear</button>
+            <button class="btn" onclick="undoShape(0)">Undo</button>
+          </div>
+          <div id="shapeStatus0" style="font-size:12px;font-family:system-ui,sans-serif;color:var(--text-faint);min-height:16px;margin-top:2px">Draw a closed shape…</div>
+        </div>
+        <div class="set-shape-editor">
+          <span class="config-label">Shape 2</span>
+          <canvas id="shapeCanvas1" class="shape-canvas" width="220" height="140"></canvas>
+          <div class="btn-row" style="margin-top:6px">
+            <button class="btn" onclick="clearShape(1)">Clear</button>
+            <button class="btn" onclick="undoShape(1)">Undo</button>
+          </div>
+          <div id="shapeStatus1" style="font-size:12px;font-family:system-ui,sans-serif;color:var(--text-faint);min-height:16px;margin-top:2px">Draw a closed shape…</div>
+        </div>
+        <div class="set-shape-editor">
+          <span class="config-label">Shape 3</span>
+          <canvas id="shapeCanvas2" class="shape-canvas" width="220" height="140"></canvas>
+          <div class="btn-row" style="margin-top:6px">
+            <button class="btn" onclick="clearShape(2)">Clear</button>
+            <button class="btn" onclick="undoShape(2)">Undo</button>
+          </div>
+          <div id="shapeStatus2" style="font-size:12px;font-family:system-ui,sans-serif;color:var(--text-faint);min-height:16px;margin-top:2px">Draw a closed shape…</div>
+        </div>
+      </div>
+      <div style="margin-top:1rem;display:flex;align-items:center;gap:10px">
+        <span class="config-label" style="margin:0">Brush size</span>
+        <input type="range" id="brushSize" min="2" max="14" value="4" style="width:130px;accent-color:var(--green)">
+      </div>
+    </div>
+
+    <div class="card" id="setColorsCard">
+      <h2>Choose three colors</h2>
+      <div class="set-color-pickers" style="margin-bottom:4px">
+        <div class="set-color-item">
+          <span class="config-label">Color 1</span>
+          <input type="color" id="setColorInput0" value="#e03030" oninput="setGame.colors[0]=this.value">
+        </div>
+        <div class="set-color-item">
+          <span class="config-label">Color 2</span>
+          <input type="color" id="setColorInput1" value="#8030b0" oninput="setGame.colors[1]=this.value">
+        </div>
+        <div class="set-color-item">
+          <span class="config-label">Color 3</span>
+          <input type="color" id="setColorInput2" value="#20a050" oninput="setGame.colors[2]=this.value">
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="setFillsCard">
+      <h2>Design three fill patterns</h2>
+      <p style="font-size:13px;font-family:system-ui,sans-serif;color:var(--text-muted);margin-bottom:1rem">Click or drag to toggle cells. This 10×10 tile repeats across the interior of each symbol.</p>
+      <div class="set-fill-editors">
+        <div class="set-fill-editor">
+          <span class="config-label">Fill 1 — solid</span>
+          <canvas id="fillCanvas0" class="fill-canvas" width="160" height="160"></canvas>
+          <button class="btn" style="margin-top:6px" onclick="clearFill(0)">Clear</button>
+        </div>
+        <div class="set-fill-editor">
+          <span class="config-label">Fill 2 — striped</span>
+          <canvas id="fillCanvas1" class="fill-canvas" width="160" height="160"></canvas>
+          <button class="btn" style="margin-top:6px" onclick="clearFill(1)">Clear</button>
+        </div>
+        <div class="set-fill-editor">
+          <span class="config-label">Fill 3 — empty</span>
+          <canvas id="fillCanvas2" class="fill-canvas" width="160" height="160"></canvas>
+          <button class="btn" style="margin-top:6px" onclick="clearFill(2)">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="setGenCard">
+      <h2>Generate &amp; print</h2>
+      <div id="setGenWarn"></div>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn primary" onclick="generateSetDeck()">Generate deck</button>
+        <button class="btn" id="setPrintBtn" onclick="window.print()" disabled>Print / Save as PDF</button>
+      </div>
+      <p style="font-size:12px;font-family:system-ui,sans-serif;color:var(--text-faint);margin-top:10px">Tip: in the print dialog, choose "Save as PDF" to get a file you can take to any print shop.</p>
+      <p style="font-size:12px;font-family:system-ui,sans-serif;color:var(--text-faint);margin-top:6px">⚠️ Print double-sided (flip on short edge) — odd pages are fronts, even pages are backs.</p>
+    </div>
+
+    <div class="card" id="setPreviewCard" style="display:none">
+      <h2>Card preview — 81 cards</h2>
+      <div class="preview-grid" id="setPreviewGrid"></div>
+    </div>
+    <div class="backs-section card" id="setBacksSection">
+      <div class="preview-grid" id="setBacksGrid"></div>
+    </div>
+  </div>
+
+  <!-- ── Halli Galli generator ── -->
+  <div id="halliGeneratorView" style="display:none">
+    <button class="back-link" onclick="showMenu()">← All games</button>
+    <div class="steps">
+      <div class="step active" id="hs1">1 · Upload fruits</div>
+      <div class="step" id="hs2">2 · Generate</div>
+    </div>
+
+    <div class="card" id="halliControlCard">
+      <h2>Upload four fruit images</h2>
+      <p style="font-size:13px;font-family:system-ui,sans-serif;color:var(--text-muted);margin-bottom:1rem">
+        One image per fruit type. The deck will have 56 cards: three each of 1–4 fruits and two of 5, for each fruit type.
+      </p>
+      <div class="halli-fruit-grid">
+        <div class="halli-fruit-slot" id="halliSlot0" onclick="document.getElementById('halliFileIn0').click()">
+          <input type="file" id="halliFileIn0" accept="image/*" style="display:none" onchange="setHalliFruit(0,this)">
+          <i class="ti ti-photo-up" id="halliIcon0"></i>
+          <img class="halli-slot-img" id="halliSlotImg0" style="display:none" alt="Fruit 1">
+          <p id="halliSlotLabel0">Fruit 1</p>
+          <p class="hint">Click or drop</p>
+          <button class="halli-clear-btn" id="halliClearBtn0" style="display:none" onclick="event.stopPropagation();clearHalliFruit(0)">×</button>
+        </div>
+        <div class="halli-fruit-slot" id="halliSlot1" onclick="document.getElementById('halliFileIn1').click()">
+          <input type="file" id="halliFileIn1" accept="image/*" style="display:none" onchange="setHalliFruit(1,this)">
+          <i class="ti ti-photo-up" id="halliIcon1"></i>
+          <img class="halli-slot-img" id="halliSlotImg1" style="display:none" alt="Fruit 2">
+          <p id="halliSlotLabel1">Fruit 2</p>
+          <p class="hint">Click or drop</p>
+          <button class="halli-clear-btn" id="halliClearBtn1" style="display:none" onclick="event.stopPropagation();clearHalliFruit(1)">×</button>
+        </div>
+        <div class="halli-fruit-slot" id="halliSlot2" onclick="document.getElementById('halliFileIn2').click()">
+          <input type="file" id="halliFileIn2" accept="image/*" style="display:none" onchange="setHalliFruit(2,this)">
+          <i class="ti ti-photo-up" id="halliIcon2"></i>
+          <img class="halli-slot-img" id="halliSlotImg2" style="display:none" alt="Fruit 3">
+          <p id="halliSlotLabel2">Fruit 3</p>
+          <p class="hint">Click or drop</p>
+          <button class="halli-clear-btn" id="halliClearBtn2" style="display:none" onclick="event.stopPropagation();clearHalliFruit(2)">×</button>
+        </div>
+        <div class="halli-fruit-slot" id="halliSlot3" onclick="document.getElementById('halliFileIn3').click()">
+          <input type="file" id="halliFileIn3" accept="image/*" style="display:none" onchange="setHalliFruit(3,this)">
+          <i class="ti ti-photo-up" id="halliIcon3"></i>
+          <img class="halli-slot-img" id="halliSlotImg3" style="display:none" alt="Fruit 4">
+          <p id="halliSlotLabel3">Fruit 4</p>
+          <p class="hint">Click or drop</p>
+          <button class="halli-clear-btn" id="halliClearBtn3" style="display:none" onclick="event.stopPropagation();clearHalliFruit(3)">×</button>
+        </div>
+      </div>
+      <div id="halliWarn" style="margin-top:8px"></div>
+      <div class="btn-row" style="margin-top:1rem">
+        <button class="btn primary" id="halliGenBtn" onclick="generateHalliDeck()" disabled>Generate deck</button>
+        <button class="btn" id="halliPrintBtn" onclick="window.print()" disabled>Print / Save as PDF</button>
+      </div>
+      <p style="font-size:12px;font-family:system-ui,sans-serif;color:var(--text-faint);margin-top:10px">Tip: in the print dialog, choose "Save as PDF" to get a file you can take to any print shop.</p>
+      <p style="font-size:12px;font-family:system-ui,sans-serif;color:var(--text-faint);margin-top:10px">⚠️ Print double-sided (flip on short edge) — odd pages are fronts, even pages are backs.</p>
+    </div>
+
+    <div class="card" id="halliPreviewCard" style="display:none">
+      <h2>Card preview — 56 cards</h2>
+      <div class="preview-grid" id="halliPreviewGrid"></div>
+    </div>
+    <div class="backs-section card" id="halliBacksSection">
+      <div class="preview-grid" id="halliBacksGrid"></div>
+    </div>
+  </div>
+
+  <!-- ── Spot it! generator (hidden until selected) ── -->
+  <div id="generatorView" style="display:none">
+    <button class="back-link" onclick="showMenu()">← All games</button>
+
+    <div class="steps">
+      <div class="step active" id="s1">1 · Choose deck size</div>
+      <div class="step" id="s2">2 · Upload symbols</div>
+      <div class="step" id="s3">3 · Generate &amp; print</div>
+    </div>
+
+    <div class="card" id="configCard">
+      <h2>Deck size</h2>
+      <label class="config-label" for="symCountIn">How many symbols do you have?</label>
+      <input type="number" id="symCountIn" min="1" value="31" oninput="updateOrder()">
+      <p style="font-size:12px;font-family:system-ui,sans-serif;color:var(--text-muted);margin-top:6px">
+        The number of symbols you upload equals the number of cards in your deck — e.g. 31 symbols makes 31 cards.
+      </p>
+      <div id="configWarn" style="margin-top:8px"></div>
+      <div class="info-row" style="margin-top:1rem">
+        <div class="pill">Cards: <strong id="cardCount">31</strong></div>
+        <div class="pill">Symbols per card: <strong id="symPerCard">6</strong></div>
+        <div class="pill">Unique symbols needed: <strong id="totalSym">31</strong></div>
+      </div>
+      <p style="font-size:13px;font-family:system-ui,sans-serif;color:var(--text-muted)">
+        Every two cards will share exactly one matching symbol — that's the math that makes Spot it! work.
+      </p>
+      <p style="font-size:12px;font-family:system-ui,sans-serif;color:var(--text-faint);margin-top:8px">
+        🃏 Fun fact: the original Spot it! has 57 symbols but only 55 cards, allegedly to allow the cards to be printed on card-making machines designed for standard playing card decks (52 plus 2 jokers and 1 advertising card). (<a href="https://en.wikipedia.org/wiki/Dobble" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">Wikipedia: Dobble</a>)
+      </p>
+    </div>
+
+    <div class="card" id="uploadCard">
+      <h2>Upload symbols</h2>
+      <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileIn').click()">
+        <i class="ti ti-photo-up"></i>
+        <p>Click to browse, or drag &amp; drop images here</p>
+        <p class="hint">PNG, JPG, SVG · each image = one symbol · transparent backgrounds work best</p>
+      </div>
+      <input type="file" id="fileIn" accept="image/*" multiple style="display:none" onchange="addFiles(this.files)">
+      <div class="symbols-grid" id="symbolsGrid"></div>
+      <div id="uploadWarn"></div>
+      <button class="btn" id="clearBtn" onclick="clearSymbols()" style="display:none;margin-top:8px">Clear all symbols</button>
+    </div>
+
+    <div class="card" id="genCard">
+      <h2>Generate &amp; print</h2>
+      <div id="genWarn"></div>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn primary" id="genBtn" onclick="generateCards()" disabled>Generate deck</button>
+        <button class="btn" id="regenBtn" onclick="regenerateDeck()" disabled>Regenerate layout</button>
+        <button class="btn" id="printBtn" onclick="window.print()" disabled>Print / Save as PDF</button>
+      </div>
+      <p style="font-size:12px;font-family:system-ui,sans-serif;color:var(--text-faint);margin-top:10px">
+        Tip: in the print dialog, choose "Save as PDF" to get a file you can take to any print shop.
+      </p>
+      <p style="font-size:12px;font-family:system-ui,sans-serif;color:var(--text-faint);margin-top:6px">⚠️ Print double-sided (flip on short edge) — odd pages are fronts, even pages are backs.</p>
+    </div>
+
+    <div class="card" id="previewCard">
+      <h2>Card preview — <span id="previewLabel"></span></h2>
+      <div class="preview-grid" id="previewGrid"></div>
+    </div>
+    <div class="backs-section card" id="spotitBacksSection">
+      <div class="preview-grid" id="spotitBacksGrid"></div>
+    </div>
+  </div>
+
+  <footer>Custom Math Games · Built with love for tabletop gaming</footer>
+  <div id="printLayout"></div>
+</div>
+
+<script>
+  let n = null;
+  let symbols = [];
+  let generatedCards = null;
+  let layoutSeed = 0;
+  const imgCache = {};
+
+  // ── SET game state ──────────────────────────────────────────────────────────
+  const SET_FILL_CELLS = 10;
+  const SET_FILL_CELL_PX = 16;
+
+  const setGame = {
+    shapes:   [null, null, null],   // canvas elements
+    shapeValid: [false, false, false],
+    shapeHistories: [[], [], []],
+    colors:   ['#e03030', '#8030b0', '#20a050'],
+    fills: [
+      Array.from({length: 10}, ()     => Array(10).fill(true)),           // solid
+      Array.from({length: 10}, (_, r) => Array(10).fill(r % 2 === 0)),    // striped
+      Array.from({length: 10}, ()     => Array(10).fill(false)),           // empty
+    ],
+    dirty: false,
+    generated: null,
+  };
+
+  let setEditorInitialized = false;
+  let shapeBrushSize = 4;
+
+  function findValidN(symbolCount) {
+    if (symbolCount < 7) return null;
+    for (let c = 2; c <= 10000; c++) {
+      if (isPrime(c) && c * c + c + 1 >= symbolCount) return c;
+    }
+    return null;
+  }
+
+  function updateOrder() {
+    const raw = document.getElementById('symCountIn').value;
+    const input = parseInt(raw);
+    const warn = document.getElementById('configWarn');
+
+    if (!raw || isNaN(input) || input < 1) {
+      warn.innerHTML = '';
+      n = null;
+      document.getElementById('cardCount').textContent = '—';
+      document.getElementById('symPerCard').textContent = '—';
+      document.getElementById('totalSym').textContent = '—';
+      renderSymbols(); checkReady(); return;
+    }
+
+    if (input < 7) {
+      warn.innerHTML = `<div class="warn">The smallest valid Spot it! deck needs 7 symbols (3 per card). Please enter at least 7.</div>`;
+      n = null;
+      document.getElementById('cardCount').textContent = '—';
+      document.getElementById('symPerCard').textContent = '—';
+      document.getElementById('totalSym').textContent = '—';
+      renderSymbols(); checkReady(); return;
+    }
+
+    n = findValidN(input);
+    if (!n) {
+      warn.innerHTML = `<div class="warn">Number too large to compute. Please enter a smaller value.</div>`;
+      checkReady(); return;
+    }
+
+    const total = n * n + n + 1;
+    document.getElementById('cardCount').textContent = total;
+    document.getElementById('symPerCard').textContent = n + 1;
+    document.getElementById('totalSym').textContent = total;
+
+    if (input == 69) {
+        warn.innerHTML = '<div class="warn">lol';
+    } else if (total !== input) {
+      warn.innerHTML = `<div class="warn">${input} is not a valid Spot it! deck size. The next valid size is <strong>${total} symbols → ${total} cards</strong> (${n + 1} symbols per card).</div>`;
+    } else {
+      warn.innerHTML = '';
+    }
+
+    renderSymbols();
+    checkReady();
+  }
+
+  function addFiles(files) {
+    Array.from(files).forEach(f => {
+      symbols.push({ url: URL.createObjectURL(f), name: f.name });
+    });
+    renderSymbols();
+    checkReady();
+    document.getElementById('s2').classList.add('active');
+  }
+
+  function removeSymbol(i) {
+    symbols.splice(i, 1);
+    renderSymbols();
+    checkReady();
+  }
+
+  function renderSymbols() {
+    const grid = document.getElementById('symbolsGrid');
+    grid.innerHTML = '';
+    symbols.forEach((s, i) => {
+      const chip = document.createElement('div');
+      chip.className = 'symbol-chip';
+      const img = document.createElement('img');
+      img.src = s.url;
+      img.title = s.name;
+      const btn = document.createElement('button');
+      btn.textContent = '×';
+      btn.setAttribute('aria-label', 'Remove ' + s.name);
+      btn.onclick = (e) => { e.stopPropagation(); removeSymbol(i); };
+      chip.appendChild(img);
+      chip.appendChild(btn);
+      grid.appendChild(chip);
+    });
+
+    document.getElementById('clearBtn').style.display = symbols.length > 0 ? 'inline-flex' : 'none';
+    const warn = document.getElementById('uploadWarn');
+    if (n === null) { warn.innerHTML = ''; return; }
+    const needed = n * n + n + 1;
+    if (symbols.length > 0 && symbols.length < needed) {
+      warn.innerHTML = `<div class="warn">You have ${symbols.length} of ${needed} symbols. Add ${needed - symbols.length} more to continue.</div>`;
+    } else if (symbols.length > needed) {
+      warn.innerHTML = `<div class="warn">You have ${symbols.length} symbols — only the first ${needed} will be used.</div>`;
+    } else {
+      warn.innerHTML = '';
+    }
+  }
+
+  function checkReady() {
+    const warn = document.getElementById('genWarn');
+    if (n === null) {
+      document.getElementById('genBtn').disabled = true;
+      warn.innerHTML = '';
+      return;
+    }
+    const needed = n * n + n + 1;
+    const ok = symbols.length >= needed;
+    document.getElementById('genBtn').disabled = !ok;
+    if (!ok) {
+      warn.innerHTML = `<div class="warn" style="margin-bottom:8px">Upload at least ${needed} symbols to generate the deck.</div>`;
+    } else {
+      warn.innerHTML = '';
+    }
+  }
+
+  function isPrime(n) {
+    if (n < 2) return false;
+    for (let i = 2; i <= Math.sqrt(n); i++) if (n % i === 0) return false;
+    return true;
+  }
+
+  function generateProjectivePlane(n) {
+    if (!isPrime(n)) return null;
+    const points = [];
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) points.push([1, i, j]);
+    for (let i = 0; i < n; i++) points.push([0, 1, i]);
+    points.push([0, 0, 1]);
+
+    function findPt(a, b, c) {
+      return points.findIndex(p => p[0] === a && p[1] === b && p[2] === c);
+    }
+
+    function add(a, b) { return (a + b) % n; }
+    function mul(a, b) { return (a * b) % n; }
+
+    const lines = [];
+
+    for (let a = 0; a < n; a++) {
+      for (let b = 0; b < n; b++) {
+        const line = [];
+        for (let x = 0; x < n; x++) {
+          line.push(findPt(1, x, add(mul(a, x), b)));
+        }
+        line.push(findPt(0, 1, a));
+        lines.push(line);
+      }
+    }
+
+    for (let b = 0; b < n; b++) {
+      const line = [];
+      for (let x = 0; x < n; x++) line.push(findPt(1, x, b));
+      line.push(findPt(0, 0, 1));
+      lines.push(line);
+    }
+
+    const infLine = [];
+    for (let i = 0; i < n; i++) infLine.push(findPt(0, 1, i));
+    infLine.push(findPt(0, 0, 1));
+    lines.push(infLine);
+
+    return lines;
+  }
+
+  function seededRand(seed) {
+    let s = seed >>> 0;
+    return () => {
+      s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+      return s / 4294967296;
+    };
+  }
+
+  function drawCard(canvas, symbolIndices, cardIndex) {
+    const ctx = canvas.getContext('2d');
+    const size = canvas.width;
+    ctx.clearRect(0, 0, size, size);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.strokeStyle = '#aaa';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.clip();
+
+    const rng = seededRand(cardIndex * 7919 + layoutSeed);
+    const radius = size / 2 - 18;           // larger edge margin
+    const count = symbolIndices.length;
+    const minSz = size * 0.13;
+    const maxSz = size * 0.44;              // higher ceiling so symbols can really fill space
+    const placed = [];
+
+    // Returns true if all 4 corners of the OBB lie within the card circle.
+    function obbFitsInCard(ox, oy, hw, hh, rot) {
+      const cos = Math.cos(rot), sin = Math.sin(rot);
+      const r2 = radius * radius;
+      const cx = size / 2, cy = size / 2;
+      return [
+        [ox + cos*hw - sin*hh, oy + sin*hw + cos*hh],
+        [ox - cos*hw - sin*hh, oy - sin*hw + cos*hh],
+        [ox - cos*hw + sin*hh, oy - sin*hw - cos*hh],
+        [ox + cos*hw + sin*hh, oy + sin*hw - cos*hh],
+      ].every(([px, py]) => (px-cx)**2 + (py-cy)**2 <= r2);
+    }
+
+    // SAT test for two OBBs. Returns true if they are separated by at least `gap` px.
+    function obbSeparated(ax, ay, ahw, ahh, arot, bx, by, bhw, bhh, brot, gap) {
+      const cosA = Math.cos(arot), sinA = Math.sin(arot);
+      const cosB = Math.cos(brot), sinB = Math.sin(brot);
+      const dx = bx - ax, dy = by - ay;
+      for (const [nx, ny] of [
+        [cosA, sinA], [-sinA, cosA],
+        [cosB, sinB], [-sinB, cosB],
+      ]) {
+        const dist = Math.abs(dx*nx + dy*ny);
+        const ra = Math.abs(cosA*nx + sinA*ny)*ahw + Math.abs(-sinA*nx + cosA*ny)*ahh;
+        const rb = Math.abs(cosB*nx + sinB*ny)*bhw + Math.abs(-sinB*nx + cosB*ny)*bhh;
+        if (dist > ra + rb + gap) return true;
+      }
+      return false;
+    }
+
+    function overlaps(x, y, hw, hh, rot) {
+      if (!obbFitsInCard(x, y, hw, hh, rot)) return true;
+      for (const p of placed) {
+        if (!obbSeparated(x, y, hw, hh, rot, p.x, p.y, p.hw, p.hh, p.rot, 8)) return true;
+      }
+      return false;
+    }
+
+    // Area budget: aim to fill ~72% of the usable disc.
+    const usableArea = Math.PI * radius * radius;
+    let areaBudget = usableArea * 0.72;
+
+    // Golden angle (~137.5°) guarantees no two symbols share a similar angle.
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+    const rotOffset = rng() * Math.PI * 2;
+
+    for (let i = 0; i < count; i++) {
+      const symIdx = symbolIndices[i];
+      const cached = imgCache[symIdx];
+      if (!cached || !cached.img.complete) continue;
+      const { img, ar } = cached;
+
+      // sz = longer dimension; derive hw/hh to preserve aspect ratio.
+      const symbolsLeft = count - i;
+      const targetArea = areaBudget / symbolsLeft;
+      const targetSz = Math.sqrt(targetArea * Math.max(ar, 1 / ar));
+      let sz = Math.min(maxSz, Math.max(minSz, targetSz * (0.65 + rng() * 0.70)));
+      const rot = rng() * Math.PI * 2;
+
+      const t = (i + 0.5) / count;
+      const baseAngle = rotOffset + i * goldenAngle;
+      const baseR = (0.28 + Math.sqrt(t) * 0.55) * radius;
+
+      let done = false;
+      for (let attempt = 0; attempt < 250 && !done; attempt++) {
+        const hw = ar >= 1 ? sz / 2 : sz * ar / 2;
+        const hh = ar >= 1 ? sz / (2 * ar) : sz / 2;
+        const cr = Math.sqrt(hw*hw + hh*hh); // circumradius for clamp hint
+        const spread = attempt * 0.018;
+        const angle = baseAngle + (rng() - 0.5) * (0.22 + spread);
+        const rTarget = baseR + (rng() - 0.5) * radius * (0.10 + spread);
+        const dist = Math.min(radius - cr - 4, Math.max(cr + 4, rTarget));
+        const x = size / 2 + Math.cos(angle) * dist;
+        const y = size / 2 + Math.sin(angle) * dist;
+
+        if (!overlaps(x, y, hw, hh, rot)) {
+          placed.push({ x, y, hw, hh, rot });
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(rot);
+          ctx.drawImage(img, -hw, -hh, hw * 2, hh * 2);
+          ctx.restore();
+          done = true;
+        }
+        if (!done) sz = Math.max(minSz * 0.65, sz * 0.97);
+      }
+
+      if (done) {
+        const p = placed[placed.length - 1];
+        areaBudget -= p.hw * 2 * p.hh * 2;
+      }
+    }
+
+    ctx.restore();
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+    ctx.strokeStyle = '#999';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  function preloadImages(cb) {
+    let loaded = 0;
+    const total = symbols.length;
+    if (total === 0) { cb(); return; }
+    symbols.forEach((s, i) => {
+      const img = new Image();
+      img.onload = () => {
+        imgCache[i] = { img, ar: img.naturalWidth / img.naturalHeight || 1 };
+        if (++loaded === total) cb();
+      };
+      img.onerror = () => {
+        imgCache[i] = { img, ar: 1 };
+        if (++loaded === total) cb();
+      };
+      img.src = s.url;
+    });
+  }
+
+  function generateCards() {
+    generatedCards = generateProjectivePlane(n);
+    if (!generatedCards) { alert('n must be prime'); return; }
+    layoutSeed = Math.floor(Math.random() * 2147483647);
+    document.getElementById('s3').classList.add('active');
+    document.getElementById('printBtn').disabled = false;
+    document.getElementById('regenBtn').disabled = false;
+    document.getElementById('previewCard').style.display = 'block';
+    document.getElementById('previewLabel').textContent = `${generatedCards.length} cards`;
+
+    preloadImages(renderPreview);
+  }
+
+  function renderPreview() {
+    const grid = document.getElementById('previewGrid');
+    grid.innerHTML = '';
+    const sz = 300;
+    generatedCards.forEach((card, ci) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'card-wrap';
+      const canvas = document.createElement('canvas');
+      canvas.width = sz;
+      canvas.height = sz;
+      canvas.className = 'preview-card';
+      drawCard(canvas, card, ci);
+      const label = document.createElement('span');
+      label.textContent = '#' + (ci + 1);
+      wrap.appendChild(canvas);
+      wrap.appendChild(label);
+      grid.appendChild(wrap);
+    });
+    buildPrintLayout(
+      generatedCards, sz, sz, 'preview-card',
+      (c, card, idx) => drawCard(c, card, idx),
+      drawSpotitBack,
+      6
+    );
+  }
+
+  const dropZone = document.getElementById('dropZone');
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    addFiles(e.dataTransfer.files);
+  });
+
+  function showGenerator() {
+    document.getElementById('menuView').style.display = 'none';
+    document.getElementById('generatorView').style.display = 'block';
+    updateOrder();
+  }
+
+  function clearSymbols() {
+    symbols = [];
+    document.getElementById('fileIn').value = '';
+    renderSymbols();
+    checkReady();
+  }
+
+  function regenerateDeck() {
+    layoutSeed = Math.floor(Math.random() * 2147483647);
+    renderPreview();
+  }
+
+  function showMenu() {
+    if (symbols.length > 0 || generatedCards !== null || setGame.dirty || halliGame.dirty) {
+      if (!confirm('Going back will clear your progress. Continue?')) return;
+    }
+    document.getElementById('generatorView').style.display = 'none';
+    document.getElementById('setGeneratorView').style.display = 'none';
+    document.getElementById('halliGeneratorView').style.display = 'none';
+    halliGame.dirty = false;
+    halliGame.fruits.forEach((_, i) => {
+      halliGame.fruits[i] = null;
+      document.getElementById(`halliFileIn${i}`).value = '';
+      document.getElementById(`halliSlotImg${i}`).style.display = 'none';
+      document.getElementById(`halliSlotImg${i}`).src = '';
+      document.getElementById(`halliIcon${i}`).style.display = 'block';
+      document.getElementById(`halliClearBtn${i}`).style.display = 'none';
+      document.getElementById(`halliSlot${i}`).classList.remove('filled');
+    });
+    document.getElementById('halliGenBtn').disabled = true;
+    document.getElementById('halliPrintBtn').disabled = true;
+    document.getElementById('halliPreviewCard').style.display = 'none';
+    document.getElementById('halliPreviewGrid').innerHTML = '';
+    document.getElementById('halliWarn').innerHTML = '';
+    ['hs1','hs2'].forEach((id, i) => document.getElementById(id).classList.toggle('active', i === 0));
+    setGame.dirty = false;
+    setGame.generated = null;
+    const spp = document.getElementById('setPreviewCard');
+    if (spp) { spp.style.display = 'none'; document.getElementById('setPreviewGrid').innerHTML = ''; }
+    const spb = document.getElementById('setPrintBtn');
+    if (spb) spb.disabled = true;
+    document.getElementById('printLayout').innerHTML = '';
+    document.getElementById('menuView').style.display = 'block';
+    n = null;
+    symbols = [];
+    generatedCards = null;
+    layoutSeed = 0;
+    document.getElementById('symbolsGrid').innerHTML = '';
+    document.getElementById('clearBtn').style.display = 'none';
+    document.getElementById('uploadWarn').innerHTML = '';
+    document.getElementById('genWarn').innerHTML = '';
+    document.getElementById('configWarn').innerHTML = '';
+    document.getElementById('previewCard').style.display = 'none';
+    document.getElementById('previewGrid').innerHTML = '';
+    document.getElementById('printBtn').disabled = true;
+    document.getElementById('genBtn').disabled = true;
+    document.getElementById('regenBtn').disabled = true;
+    document.getElementById('symCountIn').value = '31';
+    document.getElementById('fileIn').value = '';
+    ['s1','s2','s3'].forEach((id, i) => {
+      document.getElementById(id).classList.toggle('active', i === 0);
+    });
+  }
+
+  // ── SET generator ───────────────────────────────────────────────────────────
+
+  function showSetGenerator() {
+    document.getElementById('menuView').style.display = 'none';
+    document.getElementById('setGeneratorView').style.display = 'block';
+    if (!setEditorInitialized) { initSetEditor(); setEditorInitialized = true; }
+  }
+
+  function initSetEditor() {
+    for (let i = 0; i < 3; i++) {
+      const canvas = document.getElementById(`shapeCanvas${i}`);
+      setGame.shapes[i] = canvas;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      setupShapeCanvas(canvas, i);
+    }
+    for (let i = 0; i < 3; i++) { renderFillCanvas(i); setupFillCanvas(i); }
+    document.getElementById('brushSize').oninput = e => { shapeBrushSize = +e.target.value; };
+  }
+
+  // ── Shape drawing ────────────────────────────────────────────────────────────
+
+  function setupShapeCanvas(canvas, idx) {
+    let painting = false, lastPt = null;
+
+    const getPos = e => {
+      const rect = canvas.getBoundingClientRect();
+      const src = e.touches ? e.touches[0] : e;
+      return { x: (src.clientX - rect.left) * (canvas.width / rect.width),
+               y: (src.clientY - rect.top)  * (canvas.height / rect.height) };
+    };
+
+    const startDraw = e => {
+      e.preventDefault();
+      painting = true;
+      setGame.dirty = true;
+      const hist = setGame.shapeHistories[idx];
+      hist.push(canvas.toDataURL());
+      if (hist.length > 20) hist.shift();
+      lastPt = getPos(e);
+      const ctx = canvas.getContext('2d');
+      ctx.beginPath();
+      ctx.arc(lastPt.x, lastPt.y, shapeBrushSize / 2, 0, Math.PI * 2);
+      ctx.fillStyle = 'black';
+      ctx.fill();
+    };
+
+    const continueDraw = e => {
+      if (!painting) return;
+      e.preventDefault();
+      const pt = getPos(e);
+      const ctx = canvas.getContext('2d');
+      ctx.beginPath();
+      ctx.moveTo(lastPt.x, lastPt.y);
+      ctx.lineTo(pt.x, pt.y);
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = shapeBrushSize;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+      lastPt = pt;
+    };
+
+    const endDraw = () => { if (!painting) return; painting = false; lastPt = null; validateShape(idx); };
+
+    canvas.addEventListener('mousedown',  startDraw);
+    canvas.addEventListener('mousemove',  continueDraw);
+    canvas.addEventListener('mouseup',    endDraw);
+    canvas.addEventListener('mouseleave', endDraw);
+    canvas.addEventListener('touchstart', startDraw,    { passive: false });
+    canvas.addEventListener('touchmove',  continueDraw, { passive: false });
+    canvas.addEventListener('touchend',   endDraw);
+  }
+
+  function clearShape(idx) {
+    const canvas = setGame.shapes[idx];
+    const ctx = canvas.getContext('2d');
+    setGame.shapeHistories[idx].push(canvas.toDataURL());
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    setGame.shapeValid[idx] = false;
+    setShapeStatus(idx, 'Draw a closed shape…', false);
+  }
+
+  function undoShape(idx) {
+    const hist = setGame.shapeHistories[idx];
+    if (!hist.length) return;
+    const canvas = setGame.shapes[idx];
+    const img = new Image();
+    img.onload = () => {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      validateShape(idx);
+    };
+    img.src = hist.pop();
+  }
+
+  function validateShape(idx) {
+    const canvas = setGame.shapes[idx];
+    const { width: w, height: h } = canvas;
+    const data = canvas.getContext('2d').getImageData(0, 0, w, h).data;
+
+    const isWhite = i => data[i * 4] > 128;
+    const visited = new Uint8Array(w * h);
+    const queue = [];
+    const enqueue = i => { if (!visited[i] && isWhite(i)) { visited[i] = 1; queue.push(i); } };
+
+    for (let x = 0; x < w; x++) { enqueue(x); enqueue((h - 1) * w + x); }
+    for (let y = 1; y < h - 1; y++) { enqueue(y * w); enqueue(y * w + w - 1); }
+
+    for (let qi = 0; qi < queue.length; qi++) {
+      const i = queue[qi], x = i % w, y = (i / w) | 0;
+      if (x > 0)     enqueue(i - 1);
+      if (x < w - 1) enqueue(i + 1);
+      if (y > 0)     enqueue(i - w);
+      if (y < h - 1) enqueue(i + w);
+    }
+
+    let enclosed = false;
+    outer: for (let y = 1; y < h - 1; y++)
+      for (let x = 1; x < w - 1; x++)
+        if (!visited[y * w + x] && isWhite(y * w + x)) { enclosed = true; break outer; }
+
+    setGame.shapeValid[idx] = enclosed;
+    setShapeStatus(idx, enclosed ? '✓ Enclosed area detected' : 'No enclosed area yet — close the outline', enclosed);
+    const allValid = setGame.shapeValid.every(Boolean);
+    ['ss2','ss3','ss4'].forEach(id => document.getElementById(id).classList.toggle('active', allValid));
+  }
+
+  function setShapeStatus(idx, msg, ok) {
+    const el = document.getElementById(`shapeStatus${idx}`);
+    el.textContent = msg;
+    el.style.color = ok ? 'var(--green)' : 'var(--text-faint)';
+  }
+
+  // ── Fill editor ──────────────────────────────────────────────────────────────
+
+  function renderFillCanvas(idx) {
+    const canvas = document.getElementById(`fillCanvas${idx}`);
+    const ctx = canvas.getContext('2d');
+    const N = SET_FILL_CELLS, S = SET_FILL_CELL_PX;
+    const grid = setGame.fills[idx];
+    for (let r = 0; r < N; r++) {
+      for (let c = 0; c < N; c++) {
+        ctx.fillStyle = grid[r][c] ? '#1a1916' : '#ffffff';
+        ctx.fillRect(c * S, r * S, S, S);
+      }
+    }
+    ctx.strokeStyle = '#d0cdc6';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i <= N; i++) {
+      ctx.beginPath(); ctx.moveTo(i * S, 0); ctx.lineTo(i * S, N * S); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i * S); ctx.lineTo(N * S, i * S); ctx.stroke();
+    }
+  }
+
+  function setupFillCanvas(idx) {
+    const canvas = document.getElementById(`fillCanvas${idx}`);
+    const N = SET_FILL_CELLS, S = SET_FILL_CELL_PX;
+    let painting = false, paintVal = true;
+
+    const cell = e => {
+      const rect = canvas.getBoundingClientRect();
+      const src = e.touches ? e.touches[0] : e;
+      return {
+        c: Math.max(0, Math.min(N - 1, Math.floor((src.clientX - rect.left) / S))),
+        r: Math.max(0, Math.min(N - 1, Math.floor((src.clientY - rect.top)  / S))),
+      };
+    };
+
+    const start = e => {
+      e.preventDefault(); painting = true;
+      const { r, c } = cell(e);
+      paintVal = !setGame.fills[idx][r][c];
+      setGame.fills[idx][r][c] = paintVal;
+      renderFillCanvas(idx);
+    };
+    const move = e => {
+      if (!painting) return;
+      e.preventDefault();
+      const { r, c } = cell(e);
+      setGame.fills[idx][r][c] = paintVal;
+      renderFillCanvas(idx);
+    };
+    const end = () => { painting = false; };
+
+    canvas.addEventListener('mousedown',  start);
+    canvas.addEventListener('mousemove',  move);
+    canvas.addEventListener('mouseup',    end);
+    canvas.addEventListener('mouseleave', end);
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove',  move,  { passive: false });
+    canvas.addEventListener('touchend',   end);
+  }
+
+  function clearFill(idx) {
+    setGame.fills[idx] = Array.from({length: SET_FILL_CELLS}, () => Array(SET_FILL_CELLS).fill(false));
+    renderFillCanvas(idx);
+  }
+
+  // ── Card generation ──────────────────────────────────────────────────────────
+
+  function generateSetDeck() {
+    if (!setGame.shapeValid.every(Boolean)) {
+      document.getElementById('setGenWarn').innerHTML =
+        '<div class="warn" style="margin-bottom:8px">All three shapes must have an enclosed area before generating.</div>';
+      return;
+    }
+    document.getElementById('setGenWarn').innerHTML = '';
+    setGame.dirty = true;
+
+    const cards = [];
+    for (let sh = 0; sh < 3; sh++)
+      for (let co = 0; co < 3; co++)
+        for (let fi = 0; fi < 3; fi++)
+          for (let cnt = 1; cnt <= 3; cnt++)
+            cards.push([sh, co, fi, cnt]);
+    setGame.generated = cards;
+
+    const grid = document.getElementById('setPreviewGrid');
+    grid.innerHTML = '';
+
+    for (const [sh, co, fi, cnt] of cards) {
+      const wrap = document.createElement('div');
+      wrap.className = 'set-preview-wrap card-wrap';
+      const canvas = document.createElement('canvas');
+      canvas.width = 225; canvas.height = 315;
+      canvas.className = 'set-card-canvas';
+      renderSetCard(canvas, sh, co, fi, cnt);
+      const label = document.createElement('span');
+      label.textContent = `S${sh+1} C${co+1} F${fi+1} ×${cnt}`;
+      wrap.appendChild(canvas); wrap.appendChild(label);
+      grid.appendChild(wrap);
+    }
+
+    document.getElementById('setPreviewCard').style.display = 'block';
+    document.getElementById('setPrintBtn').disabled = false;
+    document.getElementById('ss4').classList.add('active');
+    buildPrintLayout(
+      cards, 225, 315, 'set-card-canvas',
+      (c, item) => renderSetCard(c, ...item),
+      drawSetBack
+    );
+  }
+
+  function renderSetCard(canvas, shapeIdx, colorIdx, fillIdx, count) {
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = 'white';
+    setRoundRect(ctx, 0, 0, W, H, 8); ctx.fill();
+    ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1; ctx.stroke();
+
+    const symW = Math.round(W * 0.80);
+    const symH = Math.round(H * 0.26);
+    const gap  = Math.round(H * 0.05);
+    const totalH = count * symH + (count - 1) * gap;
+    const startY = (H - totalH) / 2;
+    const symX = (W - symW) / 2;
+
+    for (let i = 0; i < count; i++)
+      renderSetSymbol(ctx, shapeIdx, colorIdx, fillIdx, symX, startY + i * (symH + gap), symW, symH);
+  }
+
+  function renderSetSymbol(ctx, shapeIdx, colorIdx, fillIdx, x, y, w, h) {
+    const src = setGame.shapes[shapeIdx];
+    if (!src) return;
+
+    const tmp = document.createElement('canvas');
+    tmp.width = w; tmp.height = h;
+    const tctx = tmp.getContext('2d');
+    tctx.fillStyle = 'white'; tctx.fillRect(0, 0, w, h);
+    tctx.drawImage(src, 0, 0, w, h);
+
+    const imgData = tctx.getImageData(0, 0, w, h);
+    const d = imgData.data;
+    const total = w * h;
+
+    // cls: 255 = unvisited white, 0 = outline (dark), will become 1=exterior or 2=interior
+    const cls = new Uint8Array(total);
+    for (let i = 0; i < total; i++) cls[i] = d[i * 4] > 128 ? 255 : 0;
+
+    // BFS from edges through white pixels → exterior (1)
+    const queue = [];
+    const mark = i => { if (cls[i] === 255) { cls[i] = 1; queue.push(i); } };
+    for (let bx = 0; bx < w; bx++) { mark(bx); mark((h - 1) * w + bx); }
+    for (let by = 1; by < h - 1; by++) { mark(by * w); mark(by * w + w - 1); }
+    for (let qi = 0; qi < queue.length; qi++) {
+      const i = queue[qi], bx = i % w, by = (i / w) | 0;
+      if (bx > 0)     mark(i - 1);
+      if (bx < w - 1) mark(i + 1);
+      if (by > 0)     mark(i - w);
+      if (by < h - 1) mark(i + w);
+    }
+    // Remaining 255 = interior (2)
+    for (let i = 0; i < total; i++) if (cls[i] === 255) cls[i] = 2;
+
+    const [cr, cg, cb] = hexToRgb(setGame.colors[colorIdx]);
+    const fillGrid = setGame.fills[fillIdx];
+    const N = SET_FILL_CELLS;
+
+    for (let py = 0; py < h; py++) {
+      for (let px = 0; px < w; px++) {
+        const i = py * w + px, di = i * 4, c = cls[i];
+        if (c === 0) {
+          d[di]=cr; d[di+1]=cg; d[di+2]=cb; d[di+3]=255;
+        } else if (c === 2) {
+          if (fillGrid[py % N][px % N]) { d[di]=cr; d[di+1]=cg; d[di+2]=cb; d[di+3]=255; }
+          else { d[di]=255; d[di+1]=255; d[di+2]=255; d[di+3]=255; }
+        } else {
+          d[di+3] = 0;
+        }
+      }
+    }
+
+    tctx.putImageData(imgData, 0, 0);
+    ctx.drawImage(tmp, x, y);
+  }
+
+  function setRoundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y,     x + w, y + r,     r);
+    ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h); ctx.arcTo(x,     y + h, x,     y + h - r, r);
+    ctx.lineTo(x, y + r); ctx.arcTo(x,     y,     x + r,   y,         r);
+    ctx.closePath();
+  }
+
+  function hexToRgb(hex) {
+    return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
+  }
+
+  // ── Halli Galli ─────────────────────────────────────────────────────────────
+
+  // 14 cards per fruit: three each of 1-4, two of 5  →  56 total
+  const HALLI_DIST = [1,1,1,2,2,2,3,3,3,4,4,4,5,5];
+
+  // Dice-style positions as fractions of (cardWidth, cardHeight)
+  const HALLI_LAYOUTS = {
+    1: { sf: 0.60, pos: [[0.50, 0.50]] },
+    2: { sf: 0.46, pos: [[0.50, 0.30], [0.50, 0.70]] },
+    3: { sf: 0.40, pos: [[0.50, 0.22], [0.27, 0.65], [0.73, 0.65]] },
+    4: { sf: 0.36, pos: [[0.28, 0.28], [0.72, 0.28], [0.28, 0.72], [0.72, 0.72]] },
+    5: { sf: 0.31, pos: [[0.27, 0.22], [0.73, 0.22], [0.50, 0.50], [0.27, 0.78], [0.73, 0.78]] },
+  };
+
+  const halliGame = { fruits: [null, null, null, null], dirty: false };
+  const halliImgCache = {};
+
+  function showHalliGenerator() {
+    document.getElementById('menuView').style.display = 'none';
+    document.getElementById('halliGeneratorView').style.display = 'block';
+  }
+
+  function setHalliFruit(idx, input) {
+    if (!input.files[0]) return;
+    const f = input.files[0];
+    halliGame.fruits[idx] = { url: URL.createObjectURL(f), name: f.name };
+    halliGame.dirty = true;
+    document.getElementById(`halliSlotImg${idx}`).src = halliGame.fruits[idx].url;
+    document.getElementById(`halliSlotImg${idx}`).style.display = 'block';
+    document.getElementById(`halliIcon${idx}`).style.display = 'none';
+    document.getElementById(`halliClearBtn${idx}`).style.display = 'flex';
+    document.getElementById(`halliSlot${idx}`).classList.add('filled');
+    checkHalliReady();
+  }
+
+  function clearHalliFruit(idx) {
+    halliGame.fruits[idx] = null;
+    document.getElementById(`halliFileIn${idx}`).value = '';
+    document.getElementById(`halliSlotImg${idx}`).style.display = 'none';
+    document.getElementById(`halliSlotImg${idx}`).src = '';
+    document.getElementById(`halliIcon${idx}`).style.display = 'block';
+    document.getElementById(`halliClearBtn${idx}`).style.display = 'none';
+    document.getElementById(`halliSlot${idx}`).classList.remove('filled');
+    checkHalliReady();
+  }
+
+  function checkHalliReady() {
+    const ready = halliGame.fruits.every(Boolean);
+    document.getElementById('halliGenBtn').disabled = !ready;
+    document.getElementById('halliWarn').innerHTML = ready ? '' :
+      `<div class="warn">Upload all 4 fruit images to generate the deck.</div>`;
+    if (ready) document.getElementById('hs2').classList.add('active');
+  }
+
+  function generateHalliDeck() {
+    const grid = document.getElementById('halliPreviewGrid');
+    grid.innerHTML = '';
+
+    let pending = 4, loaded = 0;
+    halliGame.fruits.forEach((f, i) => {
+      const img = new Image();
+      img.onload = () => { halliImgCache[i] = img; if (++loaded === 4) renderHalliDeck(); };
+      img.onerror = () => { halliImgCache[i] = null; if (++loaded === 4) renderHalliDeck(); };
+      img.src = f.url;
+    });
+    void pending;
+  }
+
+  function renderHalliDeck() {
+    const grid = document.getElementById('halliPreviewGrid');
+    for (let fi = 0; fi < 4; fi++) {
+      for (const count of HALLI_DIST) {
+        const wrap = document.createElement('div');
+        wrap.className = 'halli-preview-wrap card-wrap';
+        const canvas = document.createElement('canvas');
+        canvas.width = 225; canvas.height = 315;
+        canvas.className = 'halli-card-canvas';
+        renderHalliCard(canvas, fi, count);
+        const label = document.createElement('span');
+        label.textContent = `F${fi+1} ×${count}`;
+        wrap.appendChild(canvas); wrap.appendChild(label);
+        grid.appendChild(wrap);
+      }
+    }
+    document.getElementById('halliPreviewCard').style.display = 'block';
+    document.getElementById('halliPrintBtn').disabled = false;
+    document.getElementById('hs2').classList.add('active');
+    const halliItems = [];
+    for (let fi = 0; fi < 4; fi++) for (const cnt of HALLI_DIST) halliItems.push([fi, cnt]);
+    buildPrintLayout(
+      halliItems, 225, 315, 'halli-card-canvas',
+      (c, item) => renderHalliCard(c, ...item),
+      drawHalliBack
+    );
+  }
+
+  function renderHalliCard(canvas, fruitIdx, count) {
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = 'white';
+    setRoundRect(ctx, 0, 0, W, H, 10); ctx.fill();
+    ctx.strokeStyle = '#d0cdc6'; ctx.lineWidth = 1.5; ctx.stroke();
+
+    const img = halliImgCache[fruitIdx];
+    if (!img) return;
+    const { sf, pos } = HALLI_LAYOUTS[count];
+    const sz = Math.round(sf * W);
+    for (const [fx, fy] of pos) {
+      const cx = fx * W, cy = fy * H;
+      // Draw maintaining aspect ratio (object-fit: contain within sz×sz)
+      const ar = img.naturalWidth / img.naturalHeight || 1;
+      const dw = ar >= 1 ? sz : sz * ar;
+      const dh = ar >= 1 ? sz / ar : sz;
+      ctx.drawImage(img, cx - dw / 2, cy - dh / 2, dw, dh);
+    }
+  }
+
+  // ── Card backs ───────────────────────────────────────────────────────────────
+
+  // Builds interleaved front/back pages into #printLayout.
+  // items: array of per-card data; renderFront(canvas, item, globalIdx); drawBack(canvas).
+  function buildPrintLayout(items, canvasW, canvasH, cssClass, renderFront, drawBack, cardsPerPage = 9) {
+    const layout = document.getElementById('printLayout');
+    layout.innerHTML = '';
+    const N = cardsPerPage;
+    for (let i = 0; i < items.length; i += N) {
+      const chunk = items.slice(i, i + N);
+
+      // Front page — left-aligned
+      const fp = document.createElement('div');
+      fp.className = 'print-front-page';
+      chunk.forEach((item, j) => {
+        const c = document.createElement('canvas');
+        c.width = canvasW; c.height = canvasH; c.className = cssClass;
+        renderFront(c, item, i + j);
+        fp.appendChild(c);
+      });
+      layout.appendChild(fp);
+
+      // Back page — right-aligned (same count)
+      const bp = document.createElement('div');
+      bp.className = 'print-back-page';
+      chunk.forEach(() => {
+        const c = document.createElement('canvas');
+        c.width = canvasW; c.height = canvasH; c.className = cssClass;
+        drawBack(c);
+        bp.appendChild(c);
+      });
+      layout.appendChild(bp);
+    }
+  }
+
+  // Spot it! back — orange circle with scattered colour spots
+  function drawSpotitBack(canvas) {
+    const ctx = canvas.getContext('2d');
+    const S = canvas.width;
+    ctx.clearRect(0, 0, S, S);
+    ctx.save();
+    ctx.beginPath(); ctx.arc(S/2, S/2, S/2 - 2, 0, Math.PI*2); ctx.clip();
+    const bg = ctx.createRadialGradient(S*0.4, S*0.35, 0, S/2, S/2, S/2);
+    bg.addColorStop(0, '#FFAA44'); bg.addColorStop(1, '#D93B00');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, S, S);
+    for (let r = S*0.12; r < S/2; r += S*0.07) {
+      ctx.beginPath(); ctx.arc(S/2, S/2, r, 0, Math.PI*2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = S*0.025; ctx.stroke();
+    }
+    const rng = seededRand(42);
+    const cols = ['#FFE135','#4FC3F7','#A5D6A7','#F48FB1','#CE93D8','#80DEEA','#FFF176'];
+    for (let i = 0; i < 18; i++) {
+      const a = rng()*Math.PI*2, d = (0.18 + rng()*0.36)*S/2;
+      const x = S/2 + Math.cos(a)*d, y = S/2 + Math.sin(a)*d, r = (0.038 + rng()*0.048)*S;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2);
+      ctx.fillStyle = cols[i%cols.length]; ctx.globalAlpha = 0.88; ctx.fill();
+      ctx.globalAlpha = 1; ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 1; ctx.stroke();
+    }
+    ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = S*0.04;
+    ctx.font = `900 ${Math.round(S*0.19)}px Georgia,serif`; ctx.fillText('Spot', S/2, S/2 - S*0.10);
+    ctx.font = `900 ${Math.round(S*0.22)}px Georgia,serif`; ctx.fillText('it!', S/2, S/2 + S*0.115);
+    ctx.shadowBlur = 0; ctx.restore();
+    ctx.beginPath(); ctx.arc(S/2, S/2, S/2 - 1.5, 0, Math.PI*2);
+    ctx.strokeStyle = '#AA2200'; ctx.lineWidth = 3; ctx.stroke();
+  }
+
+  // SET back — deep violet with diamond lattice and "SET" wordmark
+  function drawSetBack(canvas) {
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#3A0078'; setRoundRect(ctx, 0, 0, W, H, 10); ctx.fill();
+    const d = W*0.14; ctx.strokeStyle = 'rgba(255,255,255,0.09)'; ctx.lineWidth = 1;
+    for (let x = -d; x < W+d; x += d)
+      for (let y = -d; y < H+d; y += d) {
+        ctx.beginPath();
+        ctx.moveTo(x, y-d/2); ctx.lineTo(x+d/2, y); ctx.lineTo(x, y+d/2); ctx.lineTo(x-d/2, y);
+        ctx.closePath(); ctx.stroke();
+      }
+    ctx.fillStyle = '#FFD700'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 10;
+    ctx.font = `900 ${Math.round(W*0.50)}px system-ui,sans-serif`; ctx.fillText('SET', W/2, H*0.42);
+    ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(255,255,255,0.65)';
+    ctx.font = `${Math.round(W*0.085)}px system-ui,sans-serif`; ctx.fillText('THE CARD GAME', W/2, H*0.60);
+    const oc = ['#E53935','#8E24AA','#43A047'];
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath(); ctx.ellipse(W*(0.23+i*0.27), H*0.77, W*0.10, W*0.05, 0, 0, Math.PI*2);
+      ctx.strokeStyle = oc[i]; ctx.lineWidth = 2.5; ctx.stroke();
+    }
+    ctx.strokeStyle = '#6A1B9A'; ctx.lineWidth = 2; setRoundRect(ctx, 1, 1, W-2, H-2, 10); ctx.stroke();
+  }
+
+  // Halli Galli back — sky blue with fruit-dot border and bold retro text
+  function drawHalliBack(canvas) {
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#29B6F6'); bg.addColorStop(1, '#0277BD');
+    ctx.fillStyle = bg; setRoundRect(ctx, 0, 0, W, H, 10); ctx.fill();
+    const rng = seededRand(137);
+    for (let i = 0; i < 22; i++) {
+      ctx.beginPath(); ctx.arc(rng()*W, rng()*H, (0.02+rng()*0.05)*W, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(255,255,255,0.10)'; ctx.fill();
+    }
+    const fc = ['#E53935','#FDD835','#43A047','#8E24AA'];
+    const dotR = W*0.07;
+    for (let i = 0; i < 4; i++) {
+      const x = W*(0.14+i*0.25);
+      for (const y of [H*0.10, H*0.90]) {
+        ctx.beginPath(); ctx.arc(x, y, dotR, 0, Math.PI*2);
+        ctx.fillStyle = fc[i]; ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.beginPath(); ctx.arc(x-dotR*0.28, y-dotR*0.28, dotR*0.28, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fill();
+      }
+    }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 8;
+    ctx.fillStyle = '#FFD700'; ctx.font = `900 ${Math.round(W*0.26)}px Georgia,serif`;
+    ctx.fillText('HALLI', W/2, H*0.38); ctx.fillText('GALLI', W/2, H*0.58);
+    ctx.shadowBlur = 0; ctx.strokeStyle = '#01579B'; ctx.lineWidth = 2;
+    setRoundRect(ctx, 1, 1, W-2, H-2, 10); ctx.stroke();
+  }
+</script>
+</body>
+</html>
